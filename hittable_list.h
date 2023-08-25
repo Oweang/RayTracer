@@ -2,6 +2,8 @@
 #ifndef HITTABLE_LIST_H
 #define HITTABLE_LIST_H
 
+#include "math_def.h"
+
 #include "hittable.h"
 
 #include <memory>
