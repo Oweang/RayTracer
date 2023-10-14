@@ -6,6 +6,10 @@
 #include "material.h"
 #include "sphere.h"
 
+#include <chrono>
+#include <iostream>
+#include <fstream>
+
 int main() {
     hittable_list world;
 
@@ -66,5 +70,26 @@ int main() {
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
 
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
+    auto t1 = high_resolution_clock::now();
+
     cam.render(world);
+
+    auto t2 = high_resolution_clock::now();
+
+    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+    double seconds = ms_int.count() / 1000.0;
+
+    std::ofstream out("clogLog.txt");
+    auto old_rdbuf = std::clog.rdbuf();
+    std::clog.rdbuf(out.rdbuf());
+
+    std::clog << seconds<< "s\n";
+
+    std::clog.rdbuf(old_rdbuf);
 }
