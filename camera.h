@@ -26,29 +26,25 @@ public:
     double defocus_angle = 0;  // Variation angle of rays through each pixel
     double focus_dist = 10;    // Distance from camera lookfrom point to plane of perfect focus
 
+    color** to_write;
+
     void render(const hittable& world) {
         initialize();
 
         std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-        color *** to_write = new color**[image_width];
+        to_write = new color*[image_width];
         for (int i = 0; i < image_width; ++i) {
-            to_write[i] = new color*[image_height];
+            to_write[i] = new color[image_height];
         }
 
         std::vector<std::thread> threads;
 
         for (int j = 0; j < image_height; ++j) {
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-            std::vector<int> to_write_j;
-            for (int i = 0; i < image_width; ++i) {
-                color pixel_color(0, 0, 0);
-                to_write[i][j] = &pixel_color;
-                std::clog << "\rInitial thread count: " << (threads.size()) << ' ' << "iteration: " << i << std::flush;
-                threads.emplace_back(std::thread([this, i, j, &world, &pixel_color] {
-                    multithreading(i, j, world, &pixel_color);
-                    }));
-            }
+            threads.emplace_back(std::thread([this, j, &world] {
+                multithreading(j, world);
+                }));
         }
 
         int numThreads = threads.size();
@@ -59,19 +55,20 @@ public:
 
         for (int j = 0; j < image_height; ++j) {
             std::clog << "\rRendering remaining: " << (image_height - j) << ' ' << std::flush;
-            std::vector<int> to_write_j;
             for (int i = 0; i < image_width; ++i) {
-                write_color(std::cout, *to_write[i][j], samples_per_pixel);
+                write_color(std::cout, to_write[i][j], samples_per_pixel);
             }
         }
 
         std::clog << "\rDone.                 \n";
     }
 
-    void multithreading(int i, int j, const hittable& world, color *pixel_color) {
-        for (int sample = 0; sample < samples_per_pixel; ++sample) {
-            ray r = get_ray(i, j);
-            *pixel_color += ray_color(r, max_depth, world);
+    void multithreading(int j, const hittable& world) {
+        for (int i = 0; i < image_width; ++i) {
+            for (int sample = 0; sample < samples_per_pixel; ++sample) {
+                ray r = get_ray(i, j);
+                to_write[i][j] += ray_color(r, max_depth, world);
+            }
         }
     }
 
