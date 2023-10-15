@@ -42,11 +42,11 @@ public:
             std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
             std::vector<int> to_write_j;
             for (int i = 0; i < image_width; ++i) {
-                color pixel_color(0, 0, 0);
-                to_write[i][j] = &pixel_color;
+                to_write[i][j] = new color(0, 0, 0);
+                color * pixel_color = to_write[i][j];
                 std::clog << "\rInitial thread count: " << (threads.size()) << ' ' << "iteration: " << i << std::flush;
-                threads.emplace_back(std::thread([this, i, j, &world, &pixel_color] {
-                    multithreading(i, j, world, &pixel_color);
+                threads.emplace_back(std::thread([this, i, j, &world, pixel_color] {
+                    multithreading(i, j, world, pixel_color);
                     }));
             }
         }
@@ -62,6 +62,7 @@ public:
             std::vector<int> to_write_j;
             for (int i = 0; i < image_width; ++i) {
                 write_color(std::cout, *to_write[i][j], samples_per_pixel);
+                delete to_write[i][j];
             }
         }
 
